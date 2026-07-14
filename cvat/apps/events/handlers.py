@@ -5,8 +5,7 @@
 import traceback
 from typing import Any
 
-import rq
-from crum import get_current_request, get_current_user
+from crum import get_current_request
 from django.db import DatabaseError
 from django.db.models import Model
 from rest_framework import status
@@ -50,6 +49,7 @@ from cvat.apps.webhooks.models import Webhook
 from cvat.apps.webhooks.serializers import WebhookReadSerializer
 from cvat.utils import django_database as db_utils
 from cvat.utils.http import ResourceIsBusyApiException
+from cvat.utils.utils import get_request, get_user
 
 from .cache import get_cache
 from .const import WORKING_TIME_RESOLUTION, WORKING_TIME_SCOPE
@@ -104,51 +104,6 @@ def job_id(instance):
         return jid
     except Exception:
         return None
-
-
-def get_user(instance=None) -> User | dict | None:
-    def _get_user_from_rq_job(rq_job: rq.job.Job) -> dict | None:
-        if user := BaseRQMeta.for_job(rq_job).user:
-            return user.to_dict()
-        return None
-
-    # Try to get current user from request
-    user = get_current_user()
-    if user is not None:
-        return user
-
-    # Try to get user from rq_job
-    if isinstance(instance, rq.job.Job):
-        return _get_user_from_rq_job(instance)
-    else:
-        rq_job = rq.get_current_job()
-        if rq_job:
-            return _get_user_from_rq_job(rq_job)
-
-    if isinstance(instance, User):
-        return instance
-
-    return None
-
-
-def get_request(instance=None):
-    def _get_request_from_rq_job(rq_job: rq.job.Job) -> dict | None:
-        if request := BaseRQMeta.for_job(rq_job).request:
-            return request.to_dict()
-        return None
-
-    request = get_current_request()
-    if request is not None:
-        return request
-
-    if isinstance(instance, rq.job.Job):
-        return _get_request_from_rq_job(instance)
-    else:
-        rq_job = rq.get_current_job()
-        if rq_job:
-            return _get_request_from_rq_job(rq_job)
-
-    return None
 
 
 def _get_value(obj, key):
