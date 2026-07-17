@@ -42,6 +42,11 @@
 
 ### Removed
 
+- \[Server API\] Removed the `delete:organization` webhook event because
+  organization-scoped webhook subscriptions are deleted together with their
+  organization and cannot receive the event
+  (<https://github.com/cvat-ai/cvat/pull/10897>)
+
 - \[Server API\] Removed the `create:export` and `create:backup`
   webhook events. Use `completed:export:annotations` or
   `completed:export:dataset` instead of `create:export`, and
